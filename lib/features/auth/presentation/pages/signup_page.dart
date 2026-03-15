@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:blog_app/core/theme/app_pallete.dart';
 import 'package:blog_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:blog_app/features/auth/presentation/pages/login_page.dart';
@@ -58,6 +60,7 @@ class _SignUpPageState extends State<SignUpPage> {
               AuthGradientButton(
                 buttonText: "Sign Up",
                 onPressed: () {
+                  log("Sign Up button pressed ${formKey.currentState}");
                   if (formKey.currentState!.validate()) {
                     context.read<AuthBloc>().add(
                       AuthSignUp(
