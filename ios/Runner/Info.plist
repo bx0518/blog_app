@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photos from gallery required to upload blog image</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera required to upload blog image</string>
 </dict>
 </plist>
