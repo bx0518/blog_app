@@ -11,7 +11,7 @@ class BlogCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 200,
-      margin: EdgeInsets.all(16),
+      margin: EdgeInsets.all(16).copyWith(bottom: 4),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color,
