@@ -1,4 +1,5 @@
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
+import 'package:blog_app/core/database/app_database.dart';
 import 'package:blog_app/core/network/connection_checker.dart';
 import 'package:blog_app/core/secrets/app_secrets.dart';
 import 'package:blog_app/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -8,6 +9,7 @@ import 'package:blog_app/features/auth/domain/usecases/current_user.dart';
 import 'package:blog_app/features/auth/domain/usecases/user_login.dart';
 import 'package:blog_app/features/auth/domain/usecases/user_sign_up.dart';
 import 'package:blog_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:blog_app/features/blog/data/datasources/blog_local_data_source.dart';
 import 'package:blog_app/features/blog/data/datasources/blog_remote_data_source.dart';
 import 'package:blog_app/features/blog/data/repositories/blog_repository_impl.dart';
 import 'package:blog_app/features/blog/domain/repositories/blog_repository.dart';
@@ -24,11 +26,17 @@ Future<void> initDependencies() async {
   _initAuth();
   _initBlog();
 
+  // Supabase Initialization
   final supabase = await Supabase.initialize(
     url: AppSecrets.supabaseUrl,
     anonKey: AppSecrets.supabaseAnonKey,
   );
   serviceLocator.registerLazySingleton(() => supabase.client);
+
+  // Sqflite Initialization
+  final db = await AppDatabase().init();
+  serviceLocator.registerLazySingleton(() => db);
+
   serviceLocator.registerFactory(() => InternetConnection());
 
   // core
@@ -73,9 +81,16 @@ void _initBlog() {
     ..registerFactory<BlogRemoteDataSource>(
       () => BlogRemoteDataSourceImpl(serviceLocator()),
     )
+    ..registerFactory<BlogLocalDataSource>(
+      () => BlogLocalDataSourceImpl(serviceLocator()),
+    )
     // Repository
     ..registerFactory<BlogRepository>(
-      () => BlogRepositoryImpl(serviceLocator()),
+      () => BlogRepositoryImpl(
+        serviceLocator(),
+        serviceLocator(),
+        serviceLocator(),
+      ),
     )
     // Usecases
     ..registerFactory<UploadBlog>(() => UploadBlog(serviceLocator()))

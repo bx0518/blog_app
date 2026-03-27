@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:blog_app/core/error/exceptions.dart';
 import 'package:blog_app/core/error/failures.dart';
+import 'package:blog_app/core/network/connection_checker.dart';
+import 'package:blog_app/features/blog/data/datasources/blog_local_data_source.dart';
 import 'package:blog_app/features/blog/data/datasources/blog_remote_data_source.dart';
 import 'package:blog_app/features/blog/data/models/blog_model.dart';
 import 'package:blog_app/features/blog/domain/entities/blog.dart';
@@ -11,8 +13,14 @@ import 'package:uuid/uuid.dart';
 
 class BlogRepositoryImpl implements BlogRepository {
   final BlogRemoteDataSource blogRemoteDataSource;
+  final BlogLocalDataSource blogLocalDataSource;
+  final ConnectionChecker connectionChecker;
 
-  BlogRepositoryImpl(this.blogRemoteDataSource);
+  BlogRepositoryImpl(
+    this.blogRemoteDataSource,
+    this.blogLocalDataSource,
+    this.connectionChecker,
+  );
 
   @override
   Future<Either<Failure, Blog>> uploadBlog({
@@ -50,9 +58,17 @@ class BlogRepositoryImpl implements BlogRepository {
   @override
   Future<Either<Failure, List<Blog>>> getAllBlogs() async {
     try {
-      final blogs = await blogRemoteDataSource.getAllBlogs();
+      if (!await (connectionChecker.isConnected)) {
+        final localBlogs = await blogLocalDataSource.loadBlogs();
+        return right(localBlogs);
+      }
 
-      return right(blogs);
+      final remoteBlogs = await blogRemoteDataSource.getAllBlogs();
+
+      // Update local cache with fresh data from remote
+      blogLocalDataSource.uploadLocalBlogs(blogs: remoteBlogs);
+
+      return right(remoteBlogs);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
